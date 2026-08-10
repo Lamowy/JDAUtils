@@ -1,4 +1,4 @@
-package io.github.lamowy.jdautils.core.command.validator.command
+package io.github.lamowy.jdautils.core.command.validator
 
 import io.github.lamowy.jdautils.core.command.Command
 
