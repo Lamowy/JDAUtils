@@ -25,7 +25,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.requests.GatewayIntent
 import kotlin.time.Duration.Companion.milliseconds
 
-abstract class DiscordBot(
+abstract class DiscordBot @JvmOverloads constructor(
     private val token: String,
     val loggerConfig: LoggerConfig,
     val languagesManagerConfig: LanguagesManagerConfig = LanguagesManagerConfig("en_us"),

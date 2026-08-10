@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.interactions.commands.context.UserContextInteraction
 import net.dv8tion.jda.api.requests.RestAction
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction
 
-abstract class Command(
+abstract class Command @JvmOverloads constructor(
     val discordBot: DiscordBot,
 
     val name: String,
