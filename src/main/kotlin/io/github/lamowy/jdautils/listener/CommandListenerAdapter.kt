@@ -73,7 +73,7 @@ class CommandListenerAdapter(private val discordBot: DiscordBot) : ListenerAdapt
     override fun onSlashCommandInteraction(event: SlashCommandInteractionEvent) {
         val factory = SlashCommandContextFactory(discordBot, event)
 
-        val command = factory.getCommand(event.interaction.commandString) ?: return
+        val command = factory.getCommand(event.interaction.name) ?: return
 
         if (!validatePermissions(command, event.member, event.user) {
                 event.reply(it).queue()

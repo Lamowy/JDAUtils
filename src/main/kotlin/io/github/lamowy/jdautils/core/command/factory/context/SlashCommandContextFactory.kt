@@ -21,7 +21,7 @@ class SlashCommandContextFactory(
     }
 
     override fun createContext(): Command.Context? {
-        val command = getCommand(event.interaction.commandString) ?: return null
+        val command = getCommand(event.interaction.name) ?: return null
 
         return Command.Context(
             command = command,

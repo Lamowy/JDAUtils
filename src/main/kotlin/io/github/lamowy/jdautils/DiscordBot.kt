@@ -22,6 +22,7 @@ import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.IntegrationType
 import net.dv8tion.jda.api.interactions.commands.build.Commands
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.api.requests.GatewayIntent
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -104,31 +105,85 @@ abstract class DiscordBot @JvmOverloads constructor(
     }
 
     protected fun registerCommands() {
-        for (command in commands) {
-            val commandBuilder = jda.updateCommands()
+        val commandBuilder = jda.updateCommands()
 
-            if (command.registerTypes.contains(Command.RegisterType.SLASH)) {
-                logger.log("Registering slash command: ${command.name}")
+        val slashCommands = commands
+            .filter { Command.RegisterType.SLASH in it.registerTypes }
+
+        val groupedSlashCommands = slashCommands.groupBy {
+            it.name.substringBefore(" ")
+        }
+
+        for ((commandName, commandGroup) in groupedSlashCommands) {
+            val hasSubcommands = commandGroup.any { it.name.contains(" ") }
+
+            if (hasSubcommands) {
+                val parentCommand = commandGroup
+                    .firstOrNull { it.name == commandName }
+
+                val parentDescription = parentCommand?.description
+                    ?: commandGroup.first().description
+
+                val subcommands = commandGroup
+                    .filter { it.name.contains(" ") }
+                    .map { command ->
+                        val subcommandName = command.name.substringAfter(" ")
+
+                        logger.log(
+                            "Registering slash subcommand: /$commandName $subcommandName"
+                        )
+
+                        SubcommandData(
+                            subcommandName,
+                            command.description
+                        ).addOptions(
+                            DefaultOptionsFactory(command.arguments).createOptions()
+                        )
+                    }
+
+                logger.log("Registering slash command: /$commandName")
+
+                commandBuilder.addCommands(
+                    Commands.slash(commandName, parentDescription)
+                        .addSubcommands(subcommands)
+                        .setIntegrationTypes(IntegrationType.ALL)
+                )
+            } else {
+                val command = commandGroup.first()
+
+                logger.log("Registering slash command: /${command.name}")
+
                 commandBuilder.addCommands(
                     Commands.slash(command.name, command.description)
-                        .addOptions(DefaultOptionsFactory(command.arguments).createOptions())
+                        .addOptions(
+                            DefaultOptionsFactory(command.arguments).createOptions()
+                        )
                         .setIntegrationTypes(IntegrationType.ALL)
                 )
             }
-            if (command.registerTypes.contains(Command.RegisterType.MENU_CONTEXT)) {
+        }
+
+        commands
+            .filter { Command.RegisterType.MENU_CONTEXT in it.registerTypes }
+            .forEach { command ->
                 logger.log("Registering menu context command: ${command.name}")
+
                 commandBuilder.addCommands(
                     Commands.message(command.name)
                 )
             }
-            if (command.registerTypes.contains(Command.RegisterType.USER_CONTEXT)) {
+
+        commands
+            .filter { Command.RegisterType.USER_CONTEXT in it.registerTypes }
+            .forEach { command ->
                 logger.log("Registering user context command: ${command.name}")
+
                 commandBuilder.addCommands(
                     Commands.user(command.name)
                 )
             }
-            commandBuilder.queue()
-        }
+
+        commandBuilder.queue()
     }
 
     suspend fun run() {
